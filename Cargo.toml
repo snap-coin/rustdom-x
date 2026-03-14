@@ -1,0 +1,11 @@
+[package]
+name = "rustdom-x"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+blake2b_simd = "1.0.4"
+libc = "0.2.183"
+log = "0.4.29"
+rust-argon2 = { git = "https://github.com/Ragnaroek/rust-argon2" }
+strum = { version = "0.24.0", features = ["derive"] }
