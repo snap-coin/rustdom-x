@@ -10,8 +10,6 @@ pub mod program;
 pub mod superscalar;
 pub mod vm;
 
-use std::time::Instant;
-
 pub use crate::memory::VmMemory;
 pub use crate::vm::new_vm;
 
@@ -32,7 +30,6 @@ fn test_hashing() {
     let mut vm = new_vm(cache);
 
     for i in 0..10usize {
-        let start = Instant::now();
         let hash = vm.calculate_hash(&vec![10u8; i * 1000]);
         println!("{}, took: {}ms", hash.to_hex(), start.elapsed().as_millis());
     }
