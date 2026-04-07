@@ -11,17 +11,15 @@ use std::sync::Arc;
 
 fn set_rounding_mode_env(mode: u32) {
     #[cfg(target_arch = "x86_64")]
-    unsafe {
-        let fe_mode: u32 = match mode {
-            1 => 0x400,
-            2 => 0x800,
-            3 => 0xC00,
-            _ => 0,
-        };
-        let mut mxcsr: u32 = 0;
-        std::arch::asm!("stmxcsr [{0}]", in(reg) &mut mxcsr as *mut u32, options(nostack));
-        mxcsr = (mxcsr & !0x6000) | (fe_mode & 0x6000);
-        std::arch::asm!("ldmxcsr [{0}]", in(reg) &mxcsr as *const u32, options(nostack));
+    {
+        let mxcsr = MXCSR_DEFAULT | (mode << 13);
+        unsafe {
+            std::arch::asm!(
+                "ldmxcsr [{0}]",
+                in(reg) &mxcsr,
+                options(nostack)
+            );
+        }
     }
 
     #[cfg(target_arch = "aarch64")]
