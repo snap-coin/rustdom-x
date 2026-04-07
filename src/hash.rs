@@ -158,3 +158,65 @@ pub fn gen_program_aes_4rx4(input: &[m128i; 4], output_size: usize) -> Vec<m128i
     }
     result
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Convert [u8; 64] → [m128i; 4]
+    fn bytes_to_m128i(input: &[u8; 64]) -> [m128i; 4] {
+        let mut out = [m128i::zero(); 4];
+
+        for i in 0..4 {
+            let chunk = &input[i * 16..(i + 1) * 16];
+
+            let lo = u64::from_le_bytes(chunk[0..8].try_into().unwrap());
+            let hi = u64::from_le_bytes(chunk[8..16].try_into().unwrap());
+
+            out[i] = m128i::from_u64(hi, lo);
+        }
+
+        out
+    }
+
+    // Convert Vec<u64> → Vec<u8>
+    fn u64s_to_bytes(input: &[u64]) -> Vec<u8> {
+        let mut out = Vec::with_capacity(input.len() * 8);
+        for &x in input {
+            out.extend_from_slice(&x.to_le_bytes());
+        }
+        out
+    }
+
+    #[test]
+    fn test_fill_aes_1rx4_u64() {
+        // Source: https://github.com/tevador/RandomX/blob/e0db3c4a8de36d77f50c12f7099bc37401cab88c/src/tests/tests.cpp#L171
+        // Step 1: 64-byte state buffer (zero-initialized)
+        let mut state = [0u8; 64];
+
+        // Step 2: fill first 32 bytes from hex (rest remain zero)
+        hex::decode_to_slice(
+            "6c19536eb2de31b6c0065f7f116e86f960d8af0c57210a6584c3237b9d064dc7",
+            &mut state[..32],
+        )
+        .unwrap();
+
+        // Step 3: interpret as 4 x m128i (matches RandomX layout)
+        let input = bytes_to_m128i(&state);
+
+        // Step 4: output buffer (8 u64s = 64 bytes)
+        let mut out = vec![0u64; 8];
+
+        // Step 5: call the correct function
+        fill_aes_1rx4_u64(&input, &mut out);
+
+        // Step 6: convert back to bytes
+        let out_bytes = u64s_to_bytes(&out);
+
+        // Step 7: compare first 32 bytes (matches C++ equalsHex behavior)
+        let expected = "fa89397dd6ca422513aeadba3f124b5540324c4ad4b6db434394307a17c833ab";
+
+        assert_eq!(out_bytes.len(), 64);
+        assert_eq!(hex::encode(&out_bytes[..32]), expected);
+    }
+}
