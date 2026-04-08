@@ -11,3 +11,6 @@ libc = "0.2.183"
 log = "0.4.29"
 rustdom-x-argon2 = "2.1.0"
 strum = { version = "0.24.0", features = ["derive"] }
+
+[dev-dependencies]
+hex = "0.4"

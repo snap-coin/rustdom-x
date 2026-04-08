@@ -210,3 +210,28 @@ impl VmMemory {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{ARGON_BLOCK_SIZE, SeedMemory};
+
+    #[test]
+    fn test_cache_initialization() {
+        // Source: https://github.com/tevador/RandomX/blob/e0db3c4a8de36d77f50c12f7099bc37401cab88c/src/tests/tests.cpp#L82
+        let key = b"test key 000";
+        let seed_mem = SeedMemory::new_initialised(key);
+
+        // Reinterpret Argon2 blocks as a flat u64 slice.
+        let cache_memory: &[u64] = unsafe {
+            std::slice::from_raw_parts(
+                seed_mem.blocks.as_ptr() as *const u64,
+                seed_mem.blocks.len() * (ARGON_BLOCK_SIZE as usize / 8),
+            )
+        };
+
+        // Assertions from C++ test vectors.
+        assert_eq!(cache_memory[0], 0x191e0e1d23c02186);
+        assert_eq!(cache_memory[1568413], 0xf1b62fe6210bf8b1);
+        assert_eq!(cache_memory[33554431], 0x1f47f056d05cd99b);
+    }
+}
